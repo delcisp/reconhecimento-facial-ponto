@@ -1,7 +1,61 @@
 import React, { useEffect, useState } from "react";
 import { get, ref } from "firebase/database";
 import { database } from "../../fbconfig";
-
+import { Button, IconButton } from "@material-tailwind/react";
+import { ArrowRightIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+ 
+export function DefaultPagination() {
+  const [active, setActive] = React.useState(1);
+ 
+  const getItemProps = (index: Number) =>
+    ({
+      variant: active === index ? "filled" : "text",
+      color: "gray",
+      onClick: () => setActive(Number),
+    } as any);
+ 
+  const next = () => {
+    if (active === 5) return;
+ 
+    setActive(active + 1);
+  };
+ 
+  const prev = () => {
+    if (active === 1) return;
+ 
+    setActive(active - 1);
+  };
+ 
+  return (
+    <div className="flex items-center gap-4">
+      <Button
+        variant="text"
+        className="flex items-center gap-2"
+        onClick={prev}
+        disabled={active === 1}
+      >
+        <ArrowLeftIcon strokeWidth={2} className="h-4 w-4" /> Previous
+      </Button>
+      <div className="flex items-center gap-2">
+        <IconButton {...getItemProps(1)}>1</IconButton>
+        <IconButton {...getItemProps(2)}>2</IconButton>
+        <IconButton {...getItemProps(3)}>3</IconButton>
+        <IconButton {...getItemProps(4)}>4</IconButton>
+        <IconButton {...getItemProps(5)}>5</IconButton>
+      </div>
+      <Button
+        variant="text"
+        className="flex items-center gap-2"
+        onClick={next}
+        disabled={active === 5}
+      >
+        Next
+        <ArrowRightIcon strokeWidth={2} className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+  
 export default function TeamMembers(): JSX.Element {
   interface Employee {
     id: string;
@@ -53,7 +107,6 @@ export default function TeamMembers(): JSX.Element {
             <tr className="divide-x">
               <th className="py-3 px-6 text-center">Nome</th>
               <th className="py-3 px-6">Cargo</th>
-              <th className="py-3 px-6">Ano que entrou</th>
               <th className="py-3 px-6">Horário de entrada</th>
               <th className="py-3 px-6">Horário de saída</th>
               <th className="py-3 px-6">Data do registro</th>
@@ -63,11 +116,10 @@ export default function TeamMembers(): JSX.Element {
             {Employees.map((Employee) => (
               <tr key={Employee.id} className="divide-x">
                 <td className="px-6 py-4 whitespace-nowrap flex items-center gap-x-6">
-                  <span>{Employee.id + 1}</span>
+                  <span>{Employee.id}</span>
                   {Employee.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{Employee.role}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{Employee.starting_year}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{Employee.last_attendance_time}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{Employee.gone_in}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{Employee.entrance}</td>
