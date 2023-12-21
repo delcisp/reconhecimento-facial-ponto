@@ -4,33 +4,112 @@ import { database } from "../../fbconfig";
 import Container from 'react-bootstrap/Container';
 import 'bootstrap/dist/css/bootstrap.min.css'
 import Table from "react-bootstrap/Table";
-import { Nav, Navbar } from "react-bootstrap";
-import { NavDropdown } from "react-bootstrap";
-import { Form } from "react-bootstrap";
-import { Button } from "react-bootstrap";
-import { Dropdown } from "react-bootstrap";
+import {Dropdown, Pagination } from "react-bootstrap";
+import styled from "@emotion/styled";
+interface Employee {
+  id: string;
+  name?: string;
+  role?: string;
+  starting_year?: string;
+  last_attendance_time?: string;
+  gone_in?: string;
+  daily_records: {
+    [date: string]: {
+      entrance: string;
+      exit: string;
+    };
+  };
+}
+interface MyDropdownProps {
+  dates: string[];
+}
 
+interface MyComponentProps {
+  Employees: Employee[];
+  allDailyRecordDates: string[];
+}
 
+const CustomTable = styled(Table)`
+  .thead {
+    backgroundColor: "darkblue";
+  }
+`;
+
+const MyDropdown = ({ dates }: MyDropdownProps) => {
+  return (
+    <Dropdown>
+      <Dropdown.Toggle variant="dark" id="dropdown-basic">
+        Selecione a data
+      </Dropdown.Toggle>
+      <Dropdown.Menu data-bs-theme="light">
+        {dates.map((date, index) => (
+          <Dropdown.Item key={index} href="#/action-1" data-bs-theme="dark">{date}</Dropdown.Item>
+        ))}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+};
+const getAllDates = (employees: Employee[]): string[] => {
+  const allDates = new Set<string>(); // Especifica que allDates é um Set de strings
+  employees.forEach(employee => {
+    Object.keys(employee.daily_records || {}).forEach(date => {
+      allDates.add(date);
+    });
+  });
+  return Array.from(allDates);
+}
+const MyComponent = ({ Employees, allDailyRecordDates }: MyComponentProps) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const lastIndex = currentPage * itemsPerPage;
+  const firstIndex = lastIndex - itemsPerPage;
+  const currentItems = Employees.slice(firstIndex, lastIndex);
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  let items = [];
+  for (let number = 1; number <= Math.ceil(Employees.length / itemsPerPage); number++) {
+    items.push(
+      <Pagination.Item key={number} active={number === currentPage} onClick={() => paginate(number)}>
+        {number}
+      </Pagination.Item>,
+    );
+  }
+  return (
+    <div>
+     <CustomTable variant="light" bordered striped className="mt-5 custom-table" style={{ marginBottom: '2px', overflow: 'hidden', borderRadius: '10px' }}>
+        <thead  className="text-center"   >
+          <tr>
+            <th>#</th>
+            <th>Nome</th>
+            <th>Cargo</th>
+            <th>Horário de entrada</th>
+            <th>Horário de saída</th>
+            <th>
+              <MyDropdown dates={allDailyRecordDates} />
+            </th>
+          </tr>
+        </thead>
+        <tbody className="text-center">
+          {currentItems.map((employee: Employee) => (
+            <tr key={employee.id} className="divide-x">
+              <td><span>{employee.id}</span></td>
+              <td>{employee.name}</td>
+              <td>{employee.role}</td>
+              <td>{employee.last_attendance_time}</td>
+              <td>{employee.gone_in}</td>
+              <td></td>
+            </tr>
+          ))}
+        </tbody>
+      </CustomTable>
+      <div className="d-flex justify-content-end">
+        <Pagination>{items}</Pagination>
+      </div>
+    </div>
+  );
+};
 export default function Index(): JSX.Element {
-
-    interface Employee {
-        id: string;
-        name?: string;
-        role?: string;
-        starting_year?: string;
-        last_attendance_time?: string;
-        gone_in?: string;
-        daily_records: {
-          [date: string]: {
-            entrance: string;
-            exit: string;
-          };
-        };
-      }
-      
     const [Employees, setEmployees] = useState<Employee[]>([]);
-  
-    
+    const allDailyRecordDates: string[] = getAllDates(Employees); // allDailyRecordDates é um array de strings
     useEffect(() => {
         const EmployeesRef = ref(database, "Employees");
         get(EmployeesRef)
@@ -58,71 +137,16 @@ export default function Index(): JSX.Element {
         .catch((error) => {
             console.error(error);
         });
-    }, []);
-    const MyDropdown = ({ dailyRecords }: { dailyRecords: { [date: string]: { entrance: string; exit: string; }; }; }) => {
-        const dailyRecordDates = dailyRecords ? Object.keys(dailyRecords) : [];
-      
-        return (
-          <Dropdown>
-            <Dropdown.Toggle variant="outline-dark" id="dropdown-basic" style={{ width: '200px' }}>
-              Selecione a data
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              {dailyRecordDates.map((date, index) => (
-                <Dropdown.Item key={index} href="#/action-1">{date}</Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
-        );
-      };
-      
-
+    }, []);    
     return (
-     <Container fluid className="mt-5 ">
-         <Navbar expand="lg" className="bg-body-tertiary"  >
-      <Container fluid style={{ padding: 0 }}> 
-        <Navbar.Collapse id="navbarScroll" style={{ padding: 0 }} >
-          <Form className="d-flex mr-auto" style={{ whiteSpace: 'nowrap', padding: 0 }}>
-            <Form.Control
-              type="search"
-              placeholder="Search"
-              className="me-2"
-              aria-label="Search"
-            />
-            <Button variant="outline-dark">Procure pelo servidor</Button>
-          </Form>
-        </Navbar.Collapse>
+      <Container className="mt-5" style={{ backgroundColor: "royalblue" }}>
+  <Container fluid className="mt-5" >
+      
+      <div className="d-flex justify-content-center " style={{ margin: 0 }} >
+          <MyComponent Employees={Employees} allDailyRecordDates={allDailyRecordDates} />
+      </div>      
+  </Container>
       </Container>
-    </Navbar>
-        <div className="d-flex justify-content-center">
-        <Table bordered striped className="w-70" >
-
-            <thead className="text-center" >
-                <tr>
-                     <th>#</th>
-                     <th>Nome</th>
-                     <th>Cargo</th>
-                     <th>Horário de entrada</th>
-                     <th>Horário de saída</th>
-                     <th>Data de Registro</th>
-                    </tr></thead>
-                    <tbody className="text-center">
-                    {Employees.map((employee) => (
-    <tr key={employee.id} className="divide-x">
-      <td><span>{employee.id}</span></td>
-      <td>{employee.name}</td>
-      <td>{employee.role}</td>
-      <td>{employee.last_attendance_time}</td>
-      <td>{employee.gone_in}</td>
-      <td>
-        <MyDropdown dailyRecords={employee.daily_records} />
-      </td>
-    </tr>
-  ))}
-          </tbody>
-                     </Table>
-        </div>
-       
-     </Container>
-    )
+    
+  )
 }
